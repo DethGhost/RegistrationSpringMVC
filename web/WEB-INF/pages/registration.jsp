@@ -12,6 +12,11 @@
 <html>
 <head>
     <title>Registration</title>
+    <style>
+        .error {
+            color: crimson;
+        }
+    </style>
 </head>
 <body>
 <form:form action="register" modelAttribute="user">

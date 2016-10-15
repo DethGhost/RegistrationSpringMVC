@@ -1,13 +1,15 @@
 package org.ua.deth.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.SessionAttributes;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.servlet.ModelAndView;
 import org.ua.deth.entity.User;
+import org.ua.deth.validation.FromValidator;
 
 import javax.servlet.http.HttpSession;
 
@@ -16,30 +18,46 @@ import javax.servlet.http.HttpSession;
 @SessionAttributes(types = User.class)
 public class RegistrationController {
 
+    @Autowired
+    FromValidator validator;
+
     @RequestMapping(value = "registration.html", method = RequestMethod.GET)
-    public ModelAndView getPage(ModelAndView modelAndView){
+    public ModelAndView getPage() {
+        ModelAndView modelAndView = new ModelAndView();
         modelAndView.addObject("user", new User());
         modelAndView.setViewName("registration");
         return modelAndView;
     }
 
     @RequestMapping(value = "register", method = RequestMethod.POST)
-    public ModelAndView doRegistration(@ModelAttribute("user") User user, ModelAndView modelAndView, HttpSession session){
-        modelAndView.setViewName("redirect:confirmation.html");
-        session.setAttribute("UserConfirm", user);
-        return modelAndView;
+    public ModelAndView doRegistration(@ModelAttribute("user") @Validated User user, BindingResult result, HttpSession session) {
+        ModelAndView modelAndView = new ModelAndView();
+        if (result.hasErrors()) {
+            modelAndView.setViewName("registration");
+            return modelAndView;
+        } else {
+            modelAndView.setViewName("redirect:confirmation.html");
+            session.setAttribute("UserConfirm", user);
+            return modelAndView;
+        }
     }
 
     @RequestMapping(value = "confirmation.html", method = RequestMethod.GET)
-    public String getConfirm(HttpSession session){
+    public String getConfirm(HttpSession session) {
         return "confirmation";
     }
 
     @RequestMapping(value = "confirm", method = RequestMethod.POST)
-    public ModelAndView getConfirmation(ModelAndView modelAndView, SessionStatus sessionStatus){
+    public ModelAndView getConfirmation(SessionStatus sessionStatus) {
+        ModelAndView modelAndView = new ModelAndView();
         modelAndView.setViewName("login");
 
         sessionStatus.setComplete(); // set session NULL
         return modelAndView;
+    }
+
+    @InitBinder
+    protected void initValidator(WebDataBinder webDataBinder) {
+        webDataBinder.setValidator(validator);
     }
 }
